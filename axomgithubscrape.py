@@ -1,7 +1,5 @@
 import requests
-import json
 import sys
-from datetime import datetime
 
 try:
     from colorama import init, Fore, Style
@@ -18,91 +16,50 @@ except ImportError:
     c1 = c2 = c3 = c4 = c5 = c6 = cr = bold = ""
 
 def githubuserinfo(username):
-    endpoints = {
-        "profile": f"https://api.github.com/users/{username}",
-        "hovercard": f"https://api.github.com/users/{username}/hovercard",
-        "followers": f"https://api.github.com/users/{username}/followers",
-        "following": f"https://api.github.com/users/{username}/following",
-        "repos": f"https://api.github.com/users/{username}/repos",
-        "repos_owner": f"https://api.github.com/users/{username}/repos?type=owner",
-        "repos_member": f"https://api.github.com/users/{username}/repos?type=member",
-        "repos_created": f"https://api.github.com/users/{username}/repos?sort=created",
-        "repos_updated": f"https://api.github.com/users/{username}/repos?sort=updated",
-        "starred": f"https://api.github.com/users/{username}/starred",
-        "subscriptions": f"https://api.github.com/users/{username}/subscriptions",
-        "gists": f"https://api.github.com/users/{username}/gists",
-        "orgs": f"https://api.github.com/users/{username}/orgs",
-        "events": f"https://api.github.com/users/{username}/events",
-        "events_public": f"https://api.github.com/users/{username}/events/public",
-        "received_events": f"https://api.github.com/users/{username}/received_events",
-        "received_events_public": f"https://api.github.com/users/{username}/received_events/public",
-        "keys": f"https://api.github.com/users/{username}/keys",
-        "gpg_keys": f"https://api.github.com/users/{username}/gpg_keys",
-        "follows_check": f"https://api.github.com/users/{username}/following/dummy"
-    }
+    url = f"https://api.github.com/users/{username}"
     
-    print(f"\n{c1}{bold}╔══════════════════════════════════════════════════════════════════╗{cr}")
-    print(f"{c1}{bold}║{cr} {c2}{bold}GITHUB USER INFO{cr}                                                       {c1}{bold}║{cr}")
-    print(f"{c1}{bold}╠══════════════════════════════════════════════════════════════════╣{cr}")
-    print(f"{c1}{bold}║{cr} {c3}target:{cr} {c6}{bold}{username}{cr}                                                       {c1}{bold}║{cr}")
-    print(f"{c1}{bold}╚══════════════════════════════════════════════════════════════════╝{cr}\n")
+    try:
+        r = requests.get(url, timeout=10)
+    except:
+        print(f"\n{c5}{bold}error | scrape failed - network issue{cr}\n")
+        return
     
-    for name, url in endpoints.items():
-        try:
-            r = requests.get(url)
-            
-            if r.status_code == 200:
-                data = r.json()
-                if isinstance(data, list):
-                    print(f"{c4}{bold}┌─ {name.upper().replace('_', ' ')}{cr}")
-                    print(f"{c5}│{cr} {c2}count: {c6}{len(data)}{cr}")
-                    if data and len(data) > 0:
-                        for i, item in enumerate(data[:5]):
-                            if isinstance(item, dict):
-                                itemname = item.get('login') or item.get('name') or item.get('id') or list(item.keys())[0]
-                                print(f"{c5}│{cr}   {c3}{i+1}.{cr} {c6}{itemname}{cr}")
-                    else:
-                        print(f"{c5}│{cr} {c3}empty{cr}")
-                    print(f"{c4}{bold}└─────────────────────────────────────────────────────────────{cr}\n")
-                elif isinstance(data, dict):
-                    print(f"{c4}{bold}┌─ {name.upper().replace('_', ' ')}{cr}")
-                    if name == "profile":
-                        print(f"{c5}│{cr} {c2}name:{cr} {c6}{data.get('name', 'n/a')}{cr}")
-                        print(f"{c5}│{cr} {c2}bio:{cr} {c6}{data.get('bio', 'n/a')[:60]}{cr}")
-                        print(f"{c5}│{cr} {c2}company:{cr} {c6}{data.get('company', 'n/a')}{cr}")
-                        print(f"{c5}│{cr} {c2}location:{cr} {c6}{data.get('location', 'n/a')}{cr}")
-                        print(f"{c5}│{cr} {c2}email:{cr} {c6}{data.get('email', 'n/a')}{cr}")
-                        print(f"{c5}│{cr} {c2}twitter:{cr} {c6}{data.get('twitter_username', 'n/a')}{cr}")
-                        print(f"{c5}│{cr} {c2}blog:{cr} {c6}{data.get('blog', 'n/a')}{cr}")
-                        print(f"{c5}│{cr} {c2}followers:{cr} {c6}{data.get('followers', 0)}{cr} {c2}following:{cr} {c6}{data.get('following', 0)}{cr}")
-                        print(f"{c5}│{cr} {c2}public repos:{cr} {c6}{data.get('public_repos', 0)}{cr} {c2}gists:{cr} {c6}{data.get('public_gists', 0)}{cr}")
-                        print(f"{c5}│{cr} {c2}created:{cr} {c6}{data.get('created_at', 'n/a')[:10]}{cr}")
-                        print(f"{c5}│{cr} {c2}id:{cr} {c6}{data.get('id', 'n/a')}{cr}")
-                        print(f"{c5}│{cr} {c2}type:{cr} {c6}{data.get('type', 'n/a')}{cr}")
-                        print(f"{c5}│{cr} {c2}hireable:{cr} {c6}{data.get('hireable', 'n/a')}{cr}")
-                        print(f"{c5}│{cr} {c2}profile:{cr} {c3}{data.get('html_url', 'n/a')}{cr}")
-                    elif name == "hovercard":
-                        contexts = data.get('contexts', [])
-                        for ctx in contexts[:5]:
-                            print(f"{c5}│{cr} {c6}{ctx.get('message', 'n/a')}{cr}")
-                    else:
-                        flatdata = {}
-                        for k, v in list(data.items())[:10]:
-                            if not isinstance(v, (dict, list)):
-                                flatdata[k] = v
-                        for k, v in flatdata.items():
-                            print(f"{c5}│{cr} {c2}{k}:{cr} {c6}{v}{cr}")
-                    print(f"{c4}{bold}└─────────────────────────────────────────────────────────────{cr}\n")
-                    
-        except:
-            pass
+    if r.status_code == 404:
+        print(f"\n{c5}{bold}error | scrape failed - user {username} not found{cr}\n")
+        return
+    elif r.status_code == 403:
+        print(f"\n{c5}{bold}error | scrape failed - rate limit hit (60 per hour){cr}\n")
+        return
+    elif r.status_code != 200:
+        print(f"\n{c5}{bold}error | scrape failed - http {r.status_code}{cr}\n")
+        return
+    
+    d = r.json()
+    
+    print(f"\n{c1}{bold}╔════════════════════════════════════════════════════════╗{cr}")
+    print(f"{c1}{bold}║{cr} {c2}{bold}GITHUB USER INFO{cr}                                      {c1}{bold}║{cr}")
+    print(f"{c1}{bold}╠════════════════════════════════════════════════════════╣{cr}")
+    print(f"{c1}{bold}║{cr} {c3}login:{cr}     {c6}{d.get('login', 'n/a')}{cr}                                      {c1}{bold}║{cr}")
+    print(f"{c1}{bold}║{cr} {c3}name:{cr}      {c6}{d.get('name', 'n/a')}{cr}                                      {c1}{bold}║{cr}")
+    print(f"{c1}{bold}║{cr} {c3}id:{cr}        {c6}{d.get('id', 'n/a')}{cr}                                      {c1}{bold}║{cr}")
+    print(f"{c1}{bold}║{cr} {c3}bio:{cr}       {c6}{d.get('bio', 'n/a')[:60]}{cr}                                 {c1}{bold}║{cr}")
+    print(f"{c1}{bold}║{cr} {c3}location:{cr}  {c6}{d.get('location', 'n/a')}{cr}                                      {c1}{bold}║{cr}")
+    print(f"{c1}{bold}║{cr} {c3}company:{cr}   {c6}{d.get('company', 'n/a')}{cr}                                      {c1}{bold}║{cr}")
+    print(f"{c1}{bold}║{cr} {c3}email:{cr}     {c6}{d.get('email', 'n/a')}{cr}                                      {c1}{bold}║{cr}")
+    print(f"{c1}{bold}║{cr} {c3}twitter:{cr}   {c6}{d.get('twitter_username', 'n/a')}{cr}                                      {c1}{bold}║{cr}")
+    print(f"{c1}{bold}║{cr} {c3}blog:{cr}      {c6}{d.get('blog', 'n/a')}{cr}                                      {c1}{bold}║{cr}")
+    print(f"{c1}{bold}║{cr} {c3}followers:{cr} {c2}{d.get('followers', 0)}{cr}    {c3}following:{cr} {c2}{d.get('following', 0)}{cr}                                 {c1}{bold}║{cr}")
+    print(f"{c1}{bold}║{cr} {c3}repos:{cr}     {c2}{d.get('public_repos', 0)}{cr}    {c3}gists:{cr} {c2}{d.get('public_gists', 0)}{cr}                                  {c1}{bold}║{cr}")
+    print(f"{c1}{bold}║{cr} {c3}created:{cr}   {c6}{d.get('created_at', 'n/a')[:10]}{cr}                                      {c1}{bold}║{cr}")
+    print(f"{c1}{bold}║{cr} {c3}profile:{cr}   {c3}{d.get('html_url', 'n/a')}{cr}                            {c1}{bold}║{cr}")
+    print(f"{c1}{bold}╚════════════════════════════════════════════════════════╝{cr}\n")
 
 def main():
     print(f"{c2}{bold}")
     print(""" 
     ╔═══════════════════════════════════════════╗
     ║         AXOMIC GITHUB TOOL               ║
-    ╔═══════════════════════════════════════════╝
+    ╚═══════════════════════════════════════════╝
     """)
     print(f"{cr}")
     
@@ -119,12 +76,12 @@ def main():
             if name:
                 githubuserinfo(name)
             else:
-                print(f"{c5}{bold}username required{cr}")
+                print(f"\n{c5}{bold}error | scrape failed - username empty{cr}\n")
         elif choice == "2":
-            print(f"{c2}{bold}goodbye{cr}")
+            print(f"\n{c2}{bold}[+] goodbye{cr}\n")
             sys.exit(0)
         else:
-            print(f"{c5}{bold}[-] invalid{cr}")
+            print(f"\n{c5}{bold}error | scrape failed - invalid option{cr}\n")
 
 if __name__ == "__main__":
     main()
